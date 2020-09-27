@@ -88,6 +88,7 @@ GLboolean bateu = false;
 GLboolean animacao = true;
 GLboolean gerou_posto_combustivel = false;
 GLboolean vitoria = false;
+GLboolean derrota = false;
 GLboolean gerou_casa = false;
 GLboolean abastecendo = false;
 GLboolean primeira_ponte = false;
@@ -156,6 +157,7 @@ void resetar() {
     if(vidas>0 && !desenho_3d){
         vidas--;
     }
+   
     velocidade_deslocamento = 3;
     velocidade_consumo_combustivel = 0.1;
     distancia_animacao = 0;
@@ -239,7 +241,7 @@ void desenharEntrada(GLfloat rotacionar) {
     glPushMatrix();
     
         char nome_str[80];
-        strcpy_s(nome_str, "Artur Pasetto");
+        strcpy_s(nome_str, "ARTUR PASETTO");
         GLint nome_length = (GLint)strlen(nome_str);
         GLint nome_cont = 0;
 
@@ -276,6 +278,46 @@ void desenharVitoria(GLfloat rotacionar) {
     char vitoria_str[80];
     char pontos_str[20];
     strcpy_s(vitoria_str, "PARABENS! VOCE VENCEU COM ");
+    sprintf_s(pontos_str, "%i", pontuacao);
+    strcat_s(vitoria_str, pontos_str);
+    strcat_s(vitoria_str, " PONTOS");
+
+    GLint vitoria_lenght = (GLint)strlen(vitoria_str);
+    GLint vitoria_cont = 0;
+
+    glTranslatef(-2.8f, -1.5f, 0);
+
+    glPushMatrix();
+    glDisable(GL_LIGHTING);
+    glScalef(0.00075, 0.00075, 1);
+    glTranslatef(0, 5.0f, -5.0f);
+
+    glLineWidth(3);
+    for (vitoria_cont = 0; vitoria_cont < vitoria_lenght; vitoria_cont++) {
+        glPushMatrix();
+        glColor3ub(255, 255, 255);
+        glTranslatef((200 * vitoria_cont), 0, 0);
+        glutStrokeCharacter(GLUT_STROKE_ROMAN, vitoria_str[vitoria_cont]);
+        glPopMatrix();
+    }
+    glPopMatrix();
+
+    glPopMatrix();
+}
+
+void desenharDerrota(GLfloat rotacionar) {
+    glPushMatrix();
+    glEnable(GL_LIGHTING);
+    glTranslatef(0, 0, -5.0f);
+    glRotatef(30 + rotacionar, 1, 1, 0);
+    glutSolidCube(1);
+    glPopMatrix();
+
+    glPushMatrix();
+
+    char vitoria_str[80];
+    char pontos_str[20];
+    strcpy_s(vitoria_str, "QUE PENA! VOCE PERDEU COM ");
     sprintf_s(pontos_str, "%i", pontuacao);
     strcat_s(vitoria_str, pontos_str);
     strcat_s(vitoria_str, " PONTOS");
@@ -449,7 +491,7 @@ void desenharCasa() {
 void desenharPostoCombustivel() {
 
     glPushMatrix();
-        glColor3ub(128, 0, 0);
+        glColor3ub(255,0,0);
         glBegin(GL_POLYGON);
             glVertex2f(-largura_posto_combustivel, 0);
             glVertex2f(largura_posto_combustivel, 0);
@@ -1351,6 +1393,9 @@ void anima(GLint valor) {
     else if (vitoria) {
         rotacionar += 0.36;
     }
+    else if (derrota) {
+        rotacionar += 0.36;
+    }
     else {
         if (animacao) {
             distancia_animacao -= velocidade_deslocamento;
@@ -1362,6 +1407,10 @@ void anima(GLint valor) {
                 if (vidas > 0 && timer >= 3000) {
                     resetar();
                 }
+                else if (vidas == 0 && !desenho_3d) {
+                    derrota = true;
+                }
+
             }
             else {
                 if (atirou) {
@@ -1477,10 +1526,18 @@ void keyboard(unsigned char tecla, GLint x, GLint y) {
         espera_3d = 0;
         rotacionar = 0;
         animacao = false;
+        vitoria = false;
+        derrota = false;
         distancia_animacao = 0;
         timer = 0;
         vidas = 3;
         checkpoint = 0;
+        acertou_primeira_ponte = false;
+        acertou_segunda_ponte = false;
+        acertou_terceira_ponte = false;
+        terceira_ponte = false;
+        primeira_ponte = false;
+        segunda_ponte = false;
         pontuacao = 0;
         configuracaoLuz(ambiente, diffuse, specular, posicao);
         resetar();
@@ -1523,7 +1580,6 @@ void display() {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
-       
         glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambiente);
         glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
         glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
@@ -1531,6 +1587,28 @@ void display() {
         glMaterialfv(GL_FRONT, GL_EMISSION, padrao);
 
         desenharVitoria(rotacionar);
+    }
+    else if (derrota) {
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(60, 1, 1, 30);
+
+        GLfloat diffusenovo[] = { 1.0f, 0.7490f, 0, 1.0f };//amber 255,191,0
+        GLfloat specularnovo[] = { 1.0f, 0.7490f, 0, 1.0f };//amber 255,191,0
+
+        configuracaoLuz(ambiente, diffusenovo, specularnovo, posicao);
+
+        glClearColor(0.2666f, 0.4f, 0.9294f, 1);//azul 68,102,237
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambiente);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+        glMaterialfv(GL_FRONT, GL_SHININESS, alto_brilho);
+        glMaterialfv(GL_FRONT, GL_EMISSION, padrao);
+
+        desenharDerrota(rotacionar);
     }
     else {
         glMatrixMode(GL_PROJECTION); // Tell opengl that we are doing project matrix work
