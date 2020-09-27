@@ -1263,10 +1263,6 @@ void consumirCombustivel() {
         if (!abastecendo) consumo_combustivel += velocidade_consumo_combustivel;
     }
     else bateu = true;
-
-    if (bateu) {
-        printf("combustivel\n");
-    }
 }
 
 void atirar() {
